@@ -20,6 +20,7 @@ import {
   PaperclipIcon,
   SendIcon,
   TrashIcon,
+  XIcon,
 } from 'lucide-react';
 import Image from 'next/image';
 import { use, useRef, useState } from 'react';
@@ -94,15 +95,26 @@ function MessageItem({ message }: { message: Message }) {
         <p className="text-xs text-muted-foreground">
           {message.sender?.username ?? 'Deleted User'}
         </p>
-        <p className="text-sm">{message.content}</p>
-        {message.attachment && (
-          <Image
-            src={message.attachment}
-            alt="Attachment"
-            width={300}
-            height={300}
-            className="rounded border overflow-hidden"
-          />
+        {message.deleted ? (
+          <p className="text-sm text-destructive">
+            This message was deleted.{' '}
+            {message.deletedReason && (
+              <span>Reason: {message.deletedReason}</span>
+            )}
+          </p>
+        ) : (
+          <>
+            <p className="text-sm">{message.content}</p>
+            {message.attachment && (
+              <Image
+                src={message.attachment}
+                alt="Attachment"
+                width={300}
+                height={300}
+                className="rounded border overflow-hidden"
+              />
+            )}
+          </>
         )}
       </div>
       <MessageActions message={message} />
@@ -148,6 +160,7 @@ function MessageInput({
   const generateUploadUrl = useMutation(
     api.functions.message.generateUploadUrl
   );
+  const removeAttachment = useMutation(api.functions.storage.remove);
   const [attachment, setAttachment] = useState<Id<'_storage'>>();
   const [file, setFile] = useState<File>();
   const [isUploading, setIsUploading] = useState(false);
@@ -155,7 +168,9 @@ function MessageInput({
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     setFile(file);
     setIsUploading(true);
     const url = await generateUploadUrl();
@@ -197,7 +212,22 @@ function MessageInput({
           <span className="sr-only">Attach</span>
         </Button>
         <div className="flex flex-col flex-1 gap-2">
-          {file && <ImagePreview file={file} isUploading={isUploading} />}
+          {file && (
+            <ImagePreview
+              file={file}
+              isUploading={isUploading}
+              onDelete={() => {
+                if (attachment) {
+                  removeAttachment({ storageId: attachment });
+                }
+                setFile(undefined);
+                setAttachment(undefined);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = '';
+                }
+              }}
+            />
+          )}
           <Input
             placeholder="Message"
             value={content}
@@ -227,12 +257,14 @@ function MessageInput({
 function ImagePreview({
   file,
   isUploading,
+  onDelete,
 }: {
   file: File;
   isUploading: boolean;
+  onDelete?: () => void;
 }) {
   return (
-    <div className="relative size-40 overflow-hidden rounded border">
+    <div className="relative size-40 overflow-hidden rounded border group">
       <Image
         src={URL.createObjectURL(file)}
         alt="Attachment"
@@ -244,6 +276,16 @@ function ImagePreview({
           <LoaderIcon className="animate-spin size-8" />
         </div>
       )}
+      <Button
+        type="button"
+        className="absolute top-1 right-1 size-5 rounded-full group-hover:opacity-100 opacity-0 transition-opacity"
+        variant="destructive"
+        size="icon"
+        onClick={onDelete}
+      >
+        <XIcon />
+        <span className="sr-only">Remove</span>
+      </Button>
     </div>
   );
 }
