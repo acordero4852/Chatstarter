@@ -1,3 +1,5 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -24,7 +26,7 @@ import Link from 'next/link';
 import { NewDirectMessage } from './new-direct-message';
 import { usePathname } from 'next/navigation';
 
-export function DashboardSidebar() {
+export function DMSidebar() {
   const user = useQuery(api.functions.user.get);
   const directMessages = useQuery(api.functions.dm.list);
   const pathname = usePathname();
@@ -34,7 +36,7 @@ export function DashboardSidebar() {
   }
 
   return (
-    <Sidebar>
+    <Sidebar className="left-12">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
