@@ -15,7 +15,7 @@ import { Id } from '@/convex/_generated/dataModel';
 import { useMutation, useQuery } from 'convex/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CreateChannel } from './new-channel';
+import { CreateChannel } from './create-channel';
 import { TrashIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
